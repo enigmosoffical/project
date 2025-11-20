@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartPYQ Admin Panel</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 20px;
+            margin-bottom: 20px;
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        h1 {
+            color: #1a202c;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #718096;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            color: #2d3748;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: #f7fafc;
+            color: #2d3748;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .file-upload {
+            position: relative;
+            display: block;
+            width: 100%;
+        }
+
+        .file-upload input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+
+        .file-upload-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            border: 2px dashed #cbd5e0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f7fafc;
+            min-height: 120px;
+        }
+
+        .file-upload-label:hover {
+            border-color: #667eea;
+            background: #edf2f7;
+            transform: translateY(-2px);
+        }
+
+        .file-upload-label.has-file {
+            border-color: #48bb78;
+            background: #f0fff4;
+            color: #22543d;
+        }
+
+        .upload-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            opacity: 0.7;
+        }
+
+        .upload-text {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .upload-subtext {
+            font-size: 14px;
+            color: #718096;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #718096;
+            box-shadow: 0 4px 15px rgba(113, 128, 150, 0.4);
+            margin-top: 15px;
+        }
+
+        .btn-secondary:hover {
+            background: #4a5568;
+            box-shadow: 0 8px 25px rgba(113, 128, 150, 0.6);
+        }
+
+        .message {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            font-weight: 500;
+            text-align: center;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.success {
+            background: #f0fff4;
+            color: #22543d;
+            border: 2px solid #9ae6b4;
+        }
+
+        .message.error {
+            background: #fed7d7;
+            color: #742a2a;
+            border: 2px solid #fc8181;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .user-info {
+            background: linear-gradient(135deg, #edf2f7, #e2e8f0);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #cbd5e0;
+        }
+
+        .user-email {
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 16px;
+        }
+
+        .logout-btn {
+            background: #e53e3e;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #c53030;
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 30px 20px;
+                margin: 10px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            .logo {
+                width: 70px;
+                height: 70px;
+                font-size: 28px;
+            }
+
+            .user-info {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Subtle animations */
+        .form-group {
+            animation: fadeInUp 0.6s ease forwards;
+            opacity: 0;
+        }
+
+        .form-group:nth-child(1) { animation-delay: 0.1s; }
+        .form-group:nth-child(2) { animation-delay: 0.2s; }
+        .form-group:nth-child(3) { animation-delay: 0.3s; }
+        .form-group:nth-child(4) { animation-delay: 0.4s; }
+        .form-group:nth-child(5) { animation-delay: 0.5s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .auth-toggle {
+            text-align: center;
+            margin-top: 16px;
+        }
+        
+        .auth-toggle button {
+            background: none;
+            border: none;
+            color: #667eea;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: underline;
+        }
+        
+        .auth-toggle button:hover {
+            color: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">📚</div>
+            <h1>SmartPYQ Admin</h1>
+            <p class="subtitle">Upload Previous Year Question Papers</p>
+        </div>
+
+        <!-- Login Form -->
+        <div id="loginForm">
+            <form id="authForm">
+                <div class="form-group">
+                    <label for="email">Admin Email</label>
+                    <input type="email" id="email" required placeholder="Enter your admin email">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required placeholder="Enter your password">
+                </div>
+                <button type="submit" class="btn" id="authBtn">
+                    <span id="authText">Sign In</span>
+                </button>
+                <div class="auth-toggle">
+                    <button type="button" id="toggleAuth">Need an account? Sign Up</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Upload Form -->
+        <div id="uploadForm" class="hidden">
+            <div class="user-info">
+                <span class="user-email" id="userEmail"></span>
+                <button class="logout-btn" id="logoutBtn">Sign Out</button>
+            </div>
+
+            <div id="message"></div>
+
+            <form id="pyqForm">
+                <div class="form-group">
+                    <label for="examType">Exam Type</label>
+                    <input type="text" id="examType" required placeholder="e.g., NEET, JEE Main, CBSE Board">
+                </div>
+
+                <div class="form-group">
+                    <label for="subject">Subject</label>
+                    <input type="text" id="subject" required placeholder="e.g., Physics, Chemistry, Mathematics">
+                </div>
+
+                <div class="form-group">
+                    <label for="year">Year</label>
+                    <input type="number" id="year" required min="2000" max="2030" placeholder="e.g., 2024">
+                </div>
+
+                <div class="form-group">
+                    <label for="pdfFile">PDF File</label>
+                    <div class="file-upload">
+                        <input type="file" id="pdfFile" accept=".pdf" required>
+                        <label for="pdfFile" class="file-upload-label" id="fileLabel">
+                            <span class="upload-icon">📄</span>
+                            <span class="upload-text">Choose PDF file</span>
+                            <span class="upload-subtext">or drag & drop here</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn" id="uploadBtn">
+                    <span id="uploadText">Upload PYQ Paper</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyACm9h5se25yfKJsGyK_FFt3C7Dp8glax8",
+            authDomain: "smart-pyq.firebaseapp.com",
+            projectId: "smart-pyq",
+            storageBucket: "smart-pyq.firebasestorage.app",
+            messagingSenderId: "650913050709",
+            appId: "1:650913050709:web:2beec51027e0ad16e024dc"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const storage = firebase.storage();
+        const db = firebase.firestore();
+
+        // DOM elements
+        const loginForm = document.getElementById('loginForm');
+        const uploadForm = document.getElementById('uploadForm');
+        const authForm = document.getElementById('authForm');
+        const pyqForm = document.getElementById('pyqForm');
+        const messageDiv = document.getElementById('message');
+        const userEmail = document.getElementById('userEmail');
+        const fileInput = document.getElementById('pdfFile');
+        const fileLabel = document.getElementById('fileLabel');
+        const fileText = document.querySelector('.upload-text');
+        const authBtn = document.getElementById('authBtn');
+        const authText = document.getElementById('authText');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadText = document.getElementById('uploadText');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const toggleAuthBtn = document.getElementById('toggleAuth');
+
+        // State
+        let isSignUp = false;
+
+        // Check authentication status on page load
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                showUploadForm(user);
+            } else {
+                showLoginForm();
+            }
+        });
+
+        function showLoginForm() {
+            loginForm.classList.remove('hidden');
+            uploadForm.classList.add('hidden');
+            clearMessage();
+            updateAuthButtonText();
+        }
+
+        function showUploadForm(user) {
+            loginForm.classList.add('hidden');
+            uploadForm.classList.remove('hidden');
+            userEmail.textContent = user.email;
+            clearMessage();
+        }
+
+        function showMessage(text, type = 'success') {
+            messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
+            setTimeout(() => {
+                clearMessage();
+            }, 5000);
+        }
+
+        function clearMessage() {
+            messageDiv.innerHTML = '';
+        }
+
+        function setLoading(button, textElement, isLoading, loadingText, normalText) {
+            if (isLoading) {
+                button.disabled = true;
+                textElement.innerHTML = `<span class="loading"></span>${loadingText}`;
+            } else {
+                button.disabled = false;
+                textElement.textContent = normalText;
+            }
+        }
+
+        function updateAuthButtonText() {
+            if (isSignUp) {
+                authText.textContent = 'Sign Up';
+                toggleAuthBtn.textContent = 'Already have an account? Sign In';
+            } else {
+                authText.textContent = 'Sign In';
+                toggleAuthBtn.textContent = 'Need an account? Sign Up';
+            }
+        }
+
+        // Toggle between sign in and sign up
+        toggleAuthBtn.addEventListener('click', () => {
+            isSignUp = !isSignUp;
+            updateAuthButtonText();
+        });
+
+        // Handle file selection
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.type !== 'application/pdf') {
+                    showMessage('Please select a PDF file only.', 'error');
+                    fileInput.value = '';
+                    return;
+                }
+                
+                fileLabel.classList.add('has-file');
+                fileText.textContent = `Selected: ${file.name}`;
+            } else {
+                fileLabel.classList.remove('has-file');
+                fileText.textContent = 'Choose PDF file';
+            }
+        });
+
+        // Handle drag and drop
+        fileLabel.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            fileLabel.style.borderColor = '#667eea';
+            fileLabel.style.background = '#edf2f7';
+        });
+
+        fileLabel.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            fileLabel.style.borderColor = '#cbd5e0';
+            fileLabel.style.background = '#f7fafc';
+        });
+
+        fileLabel.addEventListener('drop', function(e) {
+            e.preventDefault();
+            fileLabel.style.borderColor = '#cbd5e0';
+            fileLabel.style.background = '#f7fafc';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type === 'application/pdf') {
+                    fileInput.files = files;
+                    fileLabel.classList.add('has-file');
+                    fileText.textContent = `Selected: ${file.name}`;
+                } else {
+                    showMessage('Please select a PDF file only.', 'error');
+                }
+            }
+        });
+
+        // Handle authentication
+        authForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            setLoading(authBtn, authText, true, isSignUp ? 'Creating account...' : 'Signing in...', 
+                      isSignUp ? 'Sign Up' : 'Sign In');
+            clearMessage();
+
+            try {
+                let userCredential;
+                if (isSignUp) {
+                    userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                } else {
+                    userCredential = await auth.signInWithEmailAndPassword(email, password);
+                }
+
+                showUploadForm(userCredential.user);
+                showMessage(isSignUp ? 'Account created successfully!' : 'Successfully signed in!');
+                
+            } catch (error) {
+                console.error('Auth error:', error);
+                showMessage(error.message || 'Authentication failed. Please try again.', 'error');
+            } finally {
+                setLoading(authBtn, authText, false, isSignUp ? 'Creating account...' : 'Signing in...', 
+                          isSignUp ? 'Sign Up' : 'Sign In');
+            }
+        });
+
+        // Handle logout
+        logoutBtn.addEventListener('click', async function() {
+            try {
+                await auth.signOut();
+                showLoginForm();
+                showMessage('Successfully signed out!');
+            } catch (error) {
+                console.error('Logout error:', error);
+                showMessage('Logout failed. Please try again.', 'error');
+            }
+        });
+
+        // Handle PYQ upload
+        pyqForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const examType = document.getElementById('examType').value.trim();
+            const subject = document.getElementById('subject').value.trim();
+            const year = parseInt(document.getElementById('year').value);
+            const file = fileInput.files[0];
+
+            if (!file) {
+                showMessage('Please select a PDF file.', 'error');
+                return;
+            }
+
+            setLoading(uploadBtn, uploadText, true, 'Uploading...', 'Upload PYQ Paper');
+            clearMessage();
+
+            try {
+                // Generate unique filename
+                const timestamp = Date.now();
+                const fileName = `${examType.replace(/\s+/g, '_')}_${subject.replace(/\s+/g, '_')}_${year}_${timestamp}.pdf`;
+                
+                // Upload file to Firebase Storage
+                const storageRef = storage.ref();
+                const fileRef = storageRef.child(`pyq-papers/${fileName}`);
+                await fileRef.put(file);
+                
+                // Get download URL
+                const fileUrl = await fileRef.getDownloadURL();
+
+                // Insert metadata into Firestore
+                await db.collection('pyq_papers').add({
+                    exam_type: examType,
+                    subject: subject,
+                    year: year,
+                    file_url: fileUrl,
+                    uploaded_at: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                showMessage('✅ Paper uploaded successfully!');
+                pyqForm.reset();
+                fileLabel.classList.remove('has-file');
+                fileText.textContent = 'Choose PDF file';
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                showMessage(error.message || 'Upload failed. Please try again.', 'error');
+            } finally {
+                setLoading(uploadBtn, uploadText, false, 'Uploading...', 'Upload PYQ Paper');
+            }
+        });
+    </script>
+</body>
+</html>
